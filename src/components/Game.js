@@ -367,8 +367,7 @@ const Game = () => {
         board[b]?.emoji && 
         board[c]?.emoji &&
         board[a]?.player === board[b]?.player &&
-        board[a]?.player === board[c]?.player &&
-        board[a]?.player === currentPlayer
+        board[a]?.player === board[c]?.player
       ) {
         setWinningLine(combination);
         return board[a].player;
@@ -413,12 +412,13 @@ const Game = () => {
     setBoard(newBoard);
     playSound('place');
 
+    // Check for winner after placing the emoji
     const gameWinner = checkWinner(newBoard);
     if (gameWinner) {
-      setWinner(currentPlayer);
+      setWinner(gameWinner);
       setShowConfetti(true);
       playSound('win');
-      if (currentPlayer === 1) {
+      if (gameWinner === 1) {
         setPlayer1Score(prev => prev + 1);
       } else {
         setPlayer2Score(prev => prev + 1);

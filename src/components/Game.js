@@ -393,13 +393,17 @@ const Game = () => {
 
     const newEmoji = getRandomEmoji(currentCategory);
     const newBoard = [...board];
-    const { vanishedCell: newVanishedCell } = currentQueue.addEmoji(newEmoji, index);
     
-    if (newVanishedCell !== null && newVanishedCell !== undefined) {
-      newBoard[newVanishedCell] = null;
+    // Add emoji to queue and get vanished cell
+    const { vanishedCell: vanishedCellIndex } = currentQueue.addEmoji(newEmoji, index);
+    
+    // If there's a vanished cell, clear it
+    if (vanishedCellIndex !== null) {
+      newBoard[vanishedCellIndex] = null;
       playSound('vanish');
     }
     
+    // Place new emoji
     newBoard[index] = {
       emoji: newEmoji,
       player: currentPlayer,

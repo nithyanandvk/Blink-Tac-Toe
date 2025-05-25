@@ -5,17 +5,18 @@ export const useEmojiQueue = (maxSize = 5) => {
   const [vanishedCell, setVanishedCell] = useState(null);
 
   const addEmoji = useCallback((emoji, cellIndex) => {
+    let vanishedCellIndex = null;
     setQueue(prevQueue => {
       const newQueue = [...prevQueue, { emoji, cellIndex }];
       if (newQueue.length > maxSize) {
         const oldestEmoji = newQueue[0];
-        setVanishedCell(oldestEmoji.cellIndex);
+        vanishedCellIndex = oldestEmoji.cellIndex;
         return newQueue.slice(1);
       }
-      setVanishedCell(null);
       return newQueue;
     });
-    return { vanishedCell };
+    setVanishedCell(vanishedCellIndex);
+    return { vanishedCell: vanishedCellIndex };
   }, [maxSize]);
 
   const clearQueue = useCallback(() => {

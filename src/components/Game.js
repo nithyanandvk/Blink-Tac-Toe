@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import styled from '@emotion/styled';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EMOJI_CATEGORIES, WINNING_COMBINATIONS, MAX_EMOJIS_PER_PLAYER } from '../constants';
@@ -313,22 +313,14 @@ const HelpButton = styled(motion.button)`
 
 const Game = () => {
   const [board, setBoard] = useState(Array(9).fill(null));
-  const [currentPlayer, setCurrentPlayer] = useState(1);
-  const [player1Category, setPlayer1Category] = useState(null);
-  const [player2Category, setPlayer2Category] = useState(null);
-  const [winner, setWinner] = useState(null);
-  const [gameStarted, setGameStarted] = useState(false);
+  const [isXNext, setIsXNext] = useState(true);
+  const [scores, setScores] = useState({ x: 0, o: 0 });
   const [showRules, setShowRules] = useState(false);
-  const [player1Score, setPlayer1Score] = useState(0);
-  const [player2Score, setPlayer2Score] = useState(0);
+  const [winner, setWinner] = useState(null);
   const [winningLine, setWinningLine] = useState(null);
-  const [playerEmojis, setPlayerEmojis] = useState({ 1: [], 2: [] });
-  const [error, setError] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
-
+  const { queue, addToQueue, removeFromQueue } = useEmojiQueue();
   const { playSound } = useSound();
-  const player1Queue = useEmojiQueue(MAX_EMOJIS_PER_PLAYER);
-  const player2Queue = useEmojiQueue(MAX_EMOJIS_PER_PLAYER);
 
   const getRandomEmoji = (category) => {
     const emojis = EMOJI_CATEGORIES[category];
@@ -336,8 +328,6 @@ const Game = () => {
   };
 
   const handleCategorySelect = (player, category) => {
-    setError('');
-    
     if (player === 1) {
       if (category === player2Category) {
         setError("Players can't select the same category!");

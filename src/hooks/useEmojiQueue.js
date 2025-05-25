@@ -1,32 +1,23 @@
 import { useState, useCallback } from 'react';
 
-export const useEmojiQueue = (maxSize) => {
+export const useEmojiQueue = (maxSize = 5) => {
   const [queue, setQueue] = useState([]);
   const [vanishedCell, setVanishedCell] = useState(null);
 
-  const addEmoji = useCallback((emoji, cellIndex) => {
+  const addToQueue = useCallback((emoji) => {
     setQueue(prevQueue => {
-      const newQueue = [...prevQueue, { emoji, cellIndex }];
+      const newQueue = [...prevQueue, emoji];
       if (newQueue.length > maxSize) {
-        const oldestEmoji = newQueue[0];
-        setVanishedCell(oldestEmoji.cellIndex);
+        setVanishedCell(newQueue[0]);
         return newQueue.slice(1);
       }
-      setVanishedCell(null);
       return newQueue;
     });
-    return { vanishedCell };
   }, [maxSize]);
 
-  const clearQueue = useCallback(() => {
-    setQueue([]);
-    setVanishedCell(null);
+  const removeFromQueue = useCallback(() => {
+    setQueue(prevQueue => prevQueue.slice(1));
   }, []);
 
-  return {
-    queue,
-    vanishedCell,
-    addEmoji,
-    clearQueue
-  };
+  return { queue, addToQueue, removeFromQueue, vanishedCell };
 }; 

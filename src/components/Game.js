@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
 import { EMOJI_CATEGORIES, WINNING_COMBINATIONS, MAX_EMOJIS_PER_PLAYER } from '../constants';
 import { useSound } from '../hooks/useSound';
-import { useEmojiQueue } from '../hooks/useEmojiQueue';
 import RulesModal from './RulesModal';
 import ScoreBoard from './ScoreBoard';
 import Confetti from 'react-confetti';
@@ -325,8 +324,10 @@ const Game = () => {
   const [error, setError] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
   const { playSound } = useSound();
-  const player1Queue = useEmojiQueue(MAX_EMOJIS_PER_PLAYER);
-  const player2Queue = useEmojiQueue(MAX_EMOJIS_PER_PLAYER);
+
+  const [player1Emojis, setPlayer1Emojis] = useState([]);
+  const [player2Emojis, setPlayer2Emojis] = useState([]);
+  const MAX_EMOJIS = 3;
 
   const getRandomEmoji = (category) => {
     const emojis = EMOJI_CATEGORIES[category];
@@ -359,65 +360,57 @@ const Game = () => {
     }
   };
 
-  const checkWinner = (board) => {
-    for (const combination of WINNING_COMBINATIONS) {
-      const [a, b, c] = combination;
-      if (
-        board[a]?.emoji && 
-        board[b]?.emoji && 
-        board[c]?.emoji &&
-        board[a]?.player === board[b]?.player &&
-        board[a]?.player === board[c]?.player
-      ) {
-        setWinningLine(combination);
-        return board[a].player;
-      }
-    }
-    return null;
-  };
-
   const handleCellClick = (index) => {
-    if (winner) {
-      playSound('error');
-      return;
-    }
-
-    if (board[index]) {
+    if (winner || board[index]) {
       playSound('error');
       return;
     }
 
     const currentCategory = currentPlayer === 1 ? player1Category : player2Category;
-    const currentQueue = currentPlayer === 1 ? player1Queue : player2Queue;
+    const currentEmojis = currentPlayer === 1 ? player1Emojis : player2Emojis;
+    const setCurrentEmojis = currentPlayer === 1 ? setPlayer1Emojis : setPlayer2Emojis;
 
+    let vanishedCellIndex = null;
+    if (currentEmojis.length >= MAX_EMOJIS) {
+      vanishedCellIndex = currentEmojis[0].cellIndex;
+      if (index === vanishedCellIndex) {
+        setError("You can't place your new emoji where your oldest one will vanish!");
+        playSound('error');
+        return;
+      }
+    }
+
+    setError("");
     const newEmoji = getRandomEmoji(currentCategory);
     const newBoard = [...board];
-    
-    // Add emoji to queue and get vanished cell
-    const { vanishedCell: vanishedCellIndex } = currentQueue.addEmoji(newEmoji, index);
-    
-    // If there's a vanished cell, clear it
+
     if (vanishedCellIndex !== null) {
       newBoard[vanishedCellIndex] = null;
       playSound('vanish');
     }
-    
-    // Place new emoji
+
     newBoard[index] = {
       emoji: newEmoji,
       player: currentPlayer,
-      timestamp: Date.now()
+      category: currentCategory
     };
-    
+
+    const newEmojis = [...currentEmojis];
+    if (vanishedCellIndex !== null) {
+      newEmojis.shift();
+    }
+    newEmojis.push({ cellIndex: index, emoji: newEmoji });
+    setCurrentEmojis(newEmojis);
+
     setBoard(newBoard);
     playSound('place');
 
-    // Check for winner after placing the emoji
     const gameWinner = checkWinner(newBoard);
     if (gameWinner) {
       setWinner(gameWinner);
       setShowConfetti(true);
       playSound('win');
+      
       if (gameWinner === 1) {
         setPlayer1Score(prev => prev + 1);
       } else {
@@ -429,13 +422,32 @@ const Game = () => {
     }
   };
 
+  const checkWinner = (board) => {
+    for (const combination of WINNING_COMBINATIONS) {
+      const [a, b, c] = combination;
+      if (
+        board[a]?.emoji && 
+        board[b]?.emoji && 
+        board[c]?.emoji &&
+        board[a]?.player === board[b]?.player &&
+        board[a]?.player === board[c]?.player &&
+        board[a]?.category === board[b]?.category &&
+        board[a]?.category === board[c]?.category
+      ) {
+        setWinningLine(combination);
+        return board[a].player;
+      }
+    }
+    return null;
+  };
+
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setCurrentPlayer(1);
     setWinner(null);
     setWinningLine(null);
-    player1Queue.clearQueue();
-    player2Queue.clearQueue();
+    setPlayer1Emojis([]);
+    setPlayer2Emojis([]);
     setGameStarted(false);
     setPlayer1Category(null);
     setPlayer2Category(null);

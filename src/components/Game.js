@@ -313,14 +313,20 @@ const HelpButton = styled(motion.button)`
 
 const Game = () => {
   const [board, setBoard] = useState(Array(9).fill(null));
-  const [isXNext, setIsXNext] = useState(true);
-  const [scores, setScores] = useState({ x: 0, o: 0 });
-  const [showRules, setShowRules] = useState(false);
+  const [currentPlayer, setCurrentPlayer] = useState(1);
+  const [player1Category, setPlayer1Category] = useState(null);
+  const [player2Category, setPlayer2Category] = useState(null);
   const [winner, setWinner] = useState(null);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [showRules, setShowRules] = useState(false);
+  const [player1Score, setPlayer1Score] = useState(0);
+  const [player2Score, setPlayer2Score] = useState(0);
   const [winningLine, setWinningLine] = useState(null);
+  const [error, setError] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
-  const { queue, addToQueue, removeFromQueue } = useEmojiQueue();
   const { playSound } = useSound();
+  const player1Queue = useEmojiQueue(MAX_EMOJIS_PER_PLAYER);
+  const player2Queue = useEmojiQueue(MAX_EMOJIS_PER_PLAYER);
 
   const getRandomEmoji = (category) => {
     const emojis = EMOJI_CATEGORIES[category];
